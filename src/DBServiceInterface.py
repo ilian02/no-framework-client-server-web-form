@@ -1,19 +1,34 @@
 from abc import ABC, abstractmethod
 
-class DBServiceInterafe(ABC):
+class DbServiceInterface(ABC):
 
-    @abstractmethod
-    async def register_user(first_name, last_name, email, password, confirm_password):
+    def __init__(self):
         pass
 
     @abstractmethod
-    async def login_user(first_name, last_name, email, password, confirm_password):
+    async def create_tables(self, first_name, last_name, email, password, confirm_password):
+        pass    
+
+    @abstractmethod
+    async def register_user(self, first_name, last_name, email, password, confirm_password):
         pass
 
     @abstractmethod
-    async def create_token(user_id):
+    async def login_user(self, first_name, last_name, email, password, confirm_password):
+        pass
+    
+    @abstractmethod
+    async def get_users(self):
         pass
 
     @abstractmethod
-    async def check_token(token):
+    async def get_user_by_id(self, id):
+        pass    
+
+    @abstractmethod
+    async def create_token(self, user_id):
+        pass
+
+    @abstractmethod
+    async def check_token(self, token):
         pass
