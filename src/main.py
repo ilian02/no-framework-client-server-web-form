@@ -4,6 +4,8 @@ from register import register
 from login import login
 from templates import env, static_dir
 import mimetypes
+from DBService import Db
+import asyncio
 
 async def app(scope, receive, send):
     assert scope['type'] == 'http'
@@ -58,5 +60,9 @@ async def app(scope, receive, send):
         })
 
 
-if __name__ == "__main__":
+async def main():
+    await Db.create_tables()
     uvicorn.run("main:app", reload=True, port=8080, log_level="info")
+
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -6,15 +6,15 @@ class DbServiceInterface(ABC):
         pass
 
     @abstractmethod
-    async def create_tables(self, first_name, last_name, email, password, confirm_password):
+    async def create_tables(self):
         pass    
 
     @abstractmethod
-    async def register_user(self, first_name, last_name, email, password, confirm_password):
+    async def register_user(self, first_name, last_name, email, password):
         pass
 
     @abstractmethod
-    async def login_user(self, first_name, last_name, email, password, confirm_password):
+    async def login_user(self, email, password):
         pass
     
     @abstractmethod

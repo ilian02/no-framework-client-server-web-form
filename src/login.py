@@ -1,4 +1,5 @@
 
+import urllib
 from templates import env
 from DBService import Db
 
@@ -47,15 +48,44 @@ async def GET_login(scope, receive, send):
         })   
     
 async def POST_login(scope, receive, send):
-    print("You called post")
-    await send({
+    body = b''
+    more_body = True
+
+    while more_body:
+        message = await receive()
+        body += message.get("body")
+        more_body = message.get("more_body", False)
+
+    form_data = urllib.parse.parse_qs(body.decode())
+    email = form_data.get("email")[0]
+    password = form_data.get("password")[0]
+
+    result = await Db.login_user(email, password)
+    
+    return_result = f"Hi, {result}"
+
+
+    if result:
+        await send({
         'type': 'http.response.start',
         'status': 200,
         'headers': [
-            [b'content-type', b'text/plane'],            
+            [b'content-type', b"text/plane'; charset=utf-8"],            
         ],
-    })
-    await send({
-        'type': 'http.response.body',            
-        'body': b"Put request",
-    }) 
+        })
+        await send({
+            'type': 'http.response.body',            
+            'body': return_result.encode("utf-8"),
+        }) 
+    else:
+        await send({
+            'type': 'http.response.start',
+            'status': 200,
+            'headers': [
+                [b'content-type', b"text/plane'; charset=utf-8"],            
+            ],
+        })
+        await send({
+            'type': 'http.response.body',            
+            'body': "No such user found".encode("utf-8"),
+        }) 

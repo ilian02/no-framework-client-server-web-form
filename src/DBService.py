@@ -8,40 +8,61 @@ class DBService(DbServiceInterface):
         self.file_name = file_name
 
     async def create_tables(self):
-
+        print("Creating users table")
         try:
             with sqlite3.connect(self.file_name) as conn: 
-                cursor = self.conn.curson()
+                cursor = conn.cursor()
                 cursor.execute("""CREATE TABLE IF NOT EXISTS users(
-                            id INTEGER PRIMARY_KEY
+                            id INTEGER PRIMARY KEY,
                             first_name TEXT NOT NULL,
                             last_name TEXT NOT NULL,
                             password TEXT NOT NULL,
-                            email TEXT NOT NULL UNIQUE     
+                            email TEXT NOT NULL UNIQUE)     
                             """)
                 conn.commit()
-                return True
         except sqlite3.OperationalError as e:
             print(e)
             return False
                 
 
 
-    async def register_user(self, first_name, last_name, email, password, confirm_password):
+    async def register_user(self, first_name, last_name, email, password):
         try:
             with sqlite3.connect(self.file_name) as conn: 
-                cursor = self.conn.curson()
+                cursor = conn.cursor()
                 cursor.execute("""INSERT INTO users(first_name, last_name, email, password)
-                               values({first_name}, {last_name}, {email}, {password})""")
+                               VALUES(?, ?, ?, ?)""", (first_name, last_name, email, password))
                 conn.commit()
-                return True
+                return cursor.lastrowid
         except sqlite3.OperationalError as e:
             print(e)
             return False
 
 
-    async def login_user(self, first_name, last_name, email, password, confirm_password):
-        pass
+    async def login_user(self, email, password):
+        try:
+            print(email)
+            with sqlite3.connect(self.file_name) as conn: 
+                cursor = conn.cursor()
+                cursor.execute("""SELECT * FROM users
+                               WHERE email = ?
+                                """, (email, ))
+                
+                (id, first_name, last_name, email, password) = cursor.fetchone()
+                
+                if id is None:
+                    print("No such username")
+                    return "Email not found"
+                
+                if password == password:
+                    return first_name 
+                else:
+                    return "Wrong password"
+                    
+                
+        except sqlite3.OperationalError as e:
+            print(e)
+            return False
 
     async def get_users(self):
         pass
@@ -56,4 +77,4 @@ class DBService(DbServiceInterface):
         pass
 
 
-Db = DBService("small_db")
+Db = DBService("small_db.db")

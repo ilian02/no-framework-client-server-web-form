@@ -63,18 +63,31 @@ async def POST_register(scope, receive, send):
     email = form_data.get("email")[0]
     password = form_data.get("password")[0]
     confirm_password = form_data.get("confirm_password")[0]
+    # Check if password are the same and hash it
 
-    print(first_name + " " + last_name + " " + email + " " + password + " " + confirm_password)
     return_result = f"Hi, {first_name} {last_name}"
-    
-    await send({
-        'type': 'http.response.start',
-        'status': 200,
-        'headers': [
-            [b'content-type', b"text/plane'; charset=utf-8"],            
-        ],
-    })
-    await send({
-        'type': 'http.response.body',            
-        'body': return_result.encode("utf-8"),
-    }) 
+
+    if await Db.register_user(first_name, last_name, email, password):
+        await send({
+            'type': 'http.response.start',
+            'status': 200,
+            'headers': [
+                [b'content-type', b"text/plane'; charset=utf-8"],            
+            ],
+        })
+        await send({
+            'type': 'http.response.body',            
+            'body': return_result.encode("utf-8"),
+        }) 
+    else:
+        await send({
+            'type': 'http.response.start',
+            'status': 200,
+            'headers': [
+                [b'content-type', b"text/plane'; charset=utf-8"],            
+            ],
+        })
+        await send({
+            'type': 'http.response.body',            
+            'body': "Email is already used".encode("utf-8"),
+        })
