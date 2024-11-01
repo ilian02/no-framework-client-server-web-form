@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-class DbServiceInterface(ABC):
+class DbServiceI(ABC):
 
     def __init__(self):
         pass

@@ -1,8 +1,8 @@
-from DBServiceInterface import DbServiceInterface
+from DBServiceInterface import DbServiceI
 import sqlite3
 
 
-class DBService(DbServiceInterface):
+class DBService(DbServiceI):
     
     def __init__(self, file_name):
         self.file_name = file_name
@@ -33,10 +33,11 @@ class DBService(DbServiceInterface):
                 cursor.execute("""INSERT INTO users(first_name, last_name, email, password)
                                VALUES(?, ?, ?, ?)""", (first_name, last_name, email, password))
                 conn.commit()
-                return cursor.lastrowid
+                print("Registered")
+                return (True, cursor.lastrowid)
         except sqlite3.OperationalError as e:
             print(e)
-            return False
+            return (False, ["Email already exists"])
 
 
     async def login_user(self, email, password):
@@ -48,16 +49,15 @@ class DBService(DbServiceInterface):
                                WHERE email = ?
                                 """, (email, ))
                 
-                (id, first_name, last_name, email, password) = cursor.fetchone()
+                (ret_id, ret_first_name, ret_last_name, ret_password, ret_email) = cursor.fetchone()
                 
-                if id is None:
-                    print("No such username")
-                    return "Email not found"
-                
-                if password == password:
-                    return first_name 
+                if ret_id is None:
+                    return (False, ["Email not found"])
+
+                if password == ret_password:
+                    return (True, [ret_id])
                 else:
-                    return "Wrong password"
+                    return (False, ["Wrong password"])
                     
                 
         except sqlite3.OperationalError as e:
