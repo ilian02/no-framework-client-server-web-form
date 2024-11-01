@@ -1,68 +1,119 @@
-
-import uvicorn
-from register import register
-from login import login
-from templates import env, static_dir
-import mimetypes
-from DBService import Db
+from pathlib import Path
+import random
+import string
+from urllib.parse import parse_qs, unquote
+from controler import Controler
+from envs import env, static_dir, sessions
+from DBService import DBService
+import http.server
+from http.cookies import SimpleCookie
 import asyncio
 
-async def app(scope, receive, send):
-    assert scope['type'] == 'http'
 
-    path = scope['path']
+def generate_session_id():
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=16))
 
-    if path == '/register':
-        await register(scope, receive, send) 
-    elif path == '/login':
-        await login(scope, receive, send)
-    elif path == '/':
-        template = env.get_template("index.html")
+
+class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
+
+    def __init__(self, *args, db=None, **kwargs):
+        self.controler = Controler(db)
+        super().__init__(*args, **kwargs)
+
+    def do_GET(self):
+        # session_id = self.get_session_id_from_cookies()
+        # username = sessions.get(session_id)
+
+        if self.path == "/":
+            template = env.get_template('index.html')
+            content = template.render()
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            self.wfile.write(content.encode())
+
+        elif self.path == "/register":
+            template = env.get_template('register.html')
+            content = template.render()
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            self.wfile.write(content.encode())
+
+        elif self.path == "/login":
+            self.get_login_page()
+        
+        elif self.path.startswith("/static/"):
+            file_path = static_dir / self.path[len("/static/"):]
+            print(file_path)
+            if file_path.exists() and file_path.is_file():
+                if self.path.endswith(".css"):
+                    self.send_response(200)
+                    self.send_header("Content-type", "text/css")
+                    self.end_headers()
+                    with open(file_path, "rb") as f:
+                        self.wfile.write(f.read())
+                else:
+                    return http.server.SimpleHTTPRequestHandler.do_GET(self)
+
+    def get_login_page(self, error_message=""):
+        template = env.get_template('login.html')
         content = template.render()
-
-        await send({
-            'type': 'http.response.start',
-            'status': 200,
-            'headers': [
-                [b'content-type', b'text/html'],
-            ],
-        })
-        await send({
-            'type': 'http.response.body',
-            'body': content.encode("utf-8"),
-        })
-    elif scope['path'].startswith("/static/"):
-        file_path = static_dir / scope['path'][len("/static/"):]
-        if file_path.exists() and file_path.is_file():
-            content_type, _ = mimetypes.guess_type(str(file_path))
-            await send({
-                "type": "http.response.start",
-                "status": 200,
-                "headers": [
-                    (b"content-type", content_type.encode() if content_type else b"text/plain"),                    ],
-                })
-            with file_path.open("rb") as f:
-                await send({
-                    "type": "http.response.body",
-                    "body": f.read(),
-                })
-    else:
-        await send({
-            'type': 'http.response.start',
-            'status': 404,
-            'headers': [
-                [b'content-type', b'text/plain'],
-            ],
-        })
-        await send({
-            'type': 'http.response.body',
-            'body': b'Why are you here',
-        })
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        self.wfile.write(content.encode())
 
 
-async def main():
-    await Db.create_tables()
-    uvicorn.run("main:app", reload=True, port=8080, log_level="info")
+    def do_POST(self):
+        if self.path == "/login":
+            self.post_login()
+        elif self.path == "/register":
+            pass
+        else:
+            self.send_response(404)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            self.wfile.write(b"<h1>Where are you going!</h1>")
+            self.wfile.write(b'<a href="/">Page not found</a>')
+
+    def post_login(self):
+        content_length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(content_length)
+        data = parse_qs(post_data.decode())
+        
+        status, errors = self.controler.login_user(data.get("email")[0], data.get("password")[0])
+        if status:
+            template = env.get_template('index.html')
+            content = template.render()
+            self.send_response(302)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            self.wfile.write(content.encode())
+        else:
+            template = env.get_template('login.html')
+            content = template.render(error_message = errors)
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            self.wfile.write(content.encode())
+    
+def create_handler_with_db(db):
+    # A wrapper function to return a handler that includes the db
+    class Handler(SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, db=db, **kwargs)
+
+    return Handler
+
+def main():
+    server_address = ("", 8000)
+    db = DBService("small_db.db")
+    asyncio.run(db.create_tables())
+    handler_with_db = create_handler_with_db(db)
+    httpd = http.server.HTTPServer(server_address, handler_with_db)
+    print("Server running on port 8000...")
+    httpd.serve_forever()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

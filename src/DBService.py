@@ -75,6 +75,3 @@ class DBService(DbServiceInterface):
 
     async def check_token(self, token):
         pass
-
-
-Db = DBService("small_db.db")

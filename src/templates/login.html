@@ -4,11 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/static/register.css">
+    <link rel="stylesheet" href="/static/index.css">
     <title>Register</title>
     
     <div class="container">
         <div class="form-container">
             <h2>Login</h2>
+            {% if error_message %}
+            <p style="color: red;">{{ error_message }}</p>
+            {% endif %}
             <form action="/login" method="post">
                 <div class="form-group">
                     <label for="email">Email</label>
@@ -22,6 +26,12 @@
                     <input type="submit" value="Login">
                 </div>
             </form>
+            <div>
+                <p>If you don't have an account yet</p>
+                <a href="/register">
+                    <button class="btn btn-register">Register</button>
+                </a>
+            </div>
         </div>
     </div>
 </head>
