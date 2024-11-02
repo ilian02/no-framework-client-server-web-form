@@ -1,3 +1,7 @@
+"""
+Interface for databases
+"""
+
 from abc import ABC, abstractmethod
 
 class DbServiceI(ABC):
@@ -7,28 +11,28 @@ class DbServiceI(ABC):
 
     @abstractmethod
     async def create_tables(self):
-        pass    
+        """Takes care of table creation if they do not exist"""  
 
     @abstractmethod
     async def register_user(self, first_name, last_name, email, password):
-        pass
+        """Add new user to the database"""
 
     @abstractmethod
     async def login_user(self, email, password):
-        pass
-    
+        """Looks for user with email and password in the database"""
+
     @abstractmethod
     async def get_users(self):
-        pass
+        """Returns all users"""
 
     @abstractmethod
     async def update_user(self, first_name, last_name, email, password):
-        pass
+        """Updates user by email"""
 
     @abstractmethod
     async def get_user_by_id(self, id):
-        pass    
+        """Gets user by id"""   
 
     @abstractmethod
     async def get_user_by_email(self, email):
-        pass
+        """Gets user by email"""

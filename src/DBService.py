@@ -1,3 +1,7 @@
+"""
+Database service that implements DBServiceI interface to work with sqlite3 db
+"""
+
 from DBServiceInterface import DbServiceI
 import sqlite3
 
@@ -8,6 +12,8 @@ class DBService(DbServiceI):
         self.file_name = file_name
 
     async def create_tables(self):
+        """Creates dababase and tables if not existing"""
+
         print("Creating users table")
         try:
             with sqlite3.connect(self.file_name) as conn: 
@@ -27,6 +33,7 @@ class DBService(DbServiceI):
 
 
     async def register_user(self, first_name, last_name, email, password):
+        """Tries to add user to db"""
         try:
             with sqlite3.connect(self.file_name) as conn: 
                 cursor = conn.cursor()
@@ -40,6 +47,7 @@ class DBService(DbServiceI):
 
 
     async def login_user(self, email, password):
+        """Tries to login user"""
         try:
             with sqlite3.connect(self.file_name) as conn: 
                 cursor = conn.cursor()
@@ -63,6 +71,7 @@ class DBService(DbServiceI):
             return False
 
     async def get_users(self):
+        """Gets all users from db"""
         try:
             with sqlite3.connect(self.file_name) as conn: 
                 cursor = conn.cursor()
@@ -74,6 +83,7 @@ class DBService(DbServiceI):
             return (False, ["Error getting users from database"])
 
     async def get_user_by_id(self, id):
+        """Gets user by id"""
         try:
             with sqlite3.connect(self.file_name) as conn: 
                 cursor = conn.cursor()
@@ -86,6 +96,7 @@ class DBService(DbServiceI):
             return (False, ["Error getting users from database"])
         
     async def get_user_by_email(self, email):
+        """Gets user by email"""
         try:
             with sqlite3.connect(self.file_name) as conn: 
                 cursor = conn.cursor()
@@ -98,6 +109,7 @@ class DBService(DbServiceI):
             return (False, ["Error getting user from database"])
 
     async def update_user(self, first_name, last_name, email, password):
+        """Updates user information"""
         try:
             with sqlite3.connect(self.file_name) as conn: 
                 cursor = conn.cursor()

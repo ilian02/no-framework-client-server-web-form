@@ -1,22 +1,23 @@
+"""
+Main server to answer requests
+"""
+
 import hashlib
-import random
-import string
+import http.server
+import asyncio
 import time
 from urllib.parse import parse_qs
 from DBServiceInterface import DbServiceI
 from controller import Controller
 from envs import env, static_dir
 from DBService import DBService
-import http.server
-import asyncio
 
-
-def generate_session_id():
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=16))
 
 sessions = {}
 
 class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
+    """HTTP server request handler to take care of all GET and POST queries to the website"""
+
 
     def __init__(self, *args, db=None, **kwargs):
         self.controller = Controller(db)
@@ -24,6 +25,7 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
 
     def do_GET(self):
+        """Handle register GET queries"""
         if self.path == "/":
             session_id = self.get_session_id()
             template = env.get_template('index.html')
@@ -37,29 +39,22 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Content-type", "text/html")
             self.end_headers()
             self.wfile.write(content.encode())
-
         elif self.path == "/register":
             self.get_register_page()
-
         elif self.path == "/profile":
             self.get_profile_page()
-
         elif self.path == "/login":
             self.get_login_page()
-        
         elif self.path == "/all":
             asyncio.run(self.get_all_page())
-
         elif self.path == "/logout":
             session_id = self.get_session_id()
             if session_id in sessions:
                 del sessions[session_id]
-
             self.send_response(302)
             self.send_header("Location", "/")
             self.send_header("Set-Cookie", "session_id=; Max-Age=0; Path=/")
             self.end_headers()
-        
         elif self.path.startswith("/static/"):
             file_path = static_dir / self.path[len("/static/"):]
             if file_path.exists() and file_path.is_file():
@@ -73,27 +68,32 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                     return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
     def get_profile_page(self, errors=""):
+        """Render proifle page for GET query"""
         template = env.get_template('profile.html')
         content = template.render(error_message = errors)
         self.send_200_header(content)
 
     def get_register_page(self, error_message=""):
+        """Render register page for GET query"""
         template = env.get_template('register.html')
-        content = template.render()
+        content = template.render(error_message)
         self.send_200_header(content)
 
     def get_login_page(self, error_message=""):
+        """Render login page for GET query"""
         template = env.get_template('login.html')
-        content = template.render()
+        content = template.render(error_message)
         self.send_200_header(content)
 
     async def get_all_page(self):
+        """Render get_all page for GET query"""
         template = env.get_template('all.html')
         users = await self.controller.get_all_users()
         content = template.render(users = users)
         self.send_200_header(content)
-        
+
     def send_200_header(self, content):
+        """Send all headers and content for 200"""
         self.send_response(200)
         self.send_header("Content-type", "text/html")
         self.end_headers()
@@ -101,6 +101,7 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
 
     def do_POST(self):
+        """Handle all POST queries"""
         if self.path == "/login":
             asyncio.run(self.post_login())
         elif self.path == "/register":
@@ -114,14 +115,15 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(b"<h1>Where are you going!</h1>")
 
     async def post_login(self):
+        """Handle login POST queries"""
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)
         data = parse_qs(post_data.decode())
-        
-        (status, errors) = await self.controller.login_user(data.get("email")[0], data.get("password")[0])
+        (status, errors) = await self.controller.login_user(data.get("email")[0],
+                                                             data.get("password")[0])
         template = None
         content = None
-        if status == True:
+        if status is True:
             session_id = self.generate_session_id(data.get("email")[0])
             sessions[session_id] = {"email": data.get("email")[0], "created_at": time.time()}
             self.send_response(302)
@@ -132,19 +134,22 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             template = env.get_template('login.html')
             content = template.render(error_message = errors)
             self.send_response(200)
-            
+        
         self.send_header("Content-type", "text/html")
         self.end_headers()
         self.wfile.write(content.encode())
 
     async def post_register(self):
+        """Handle register POST queries"""
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)
         data = parse_qs(post_data.decode())
-        
-        (status, errors) = await self.controller.register_user(data.get("first_name")[0], data.get("last_name")[0],
-                                                    data.get("email")[0], data.get("password")[0],
-                                                    data.get("confirm_password")[0])
+
+        (status, errors) = await self.controller.register_user(data.get("first_name")[0],
+                                                                data.get("last_name")[0],
+                                                                data.get("email")[0],
+                                                                data.get("password")[0],
+                                                                data.get("confirm_password")[0])
         template = None
         content = None
         if status:
@@ -155,12 +160,12 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             template = env.get_template('register.html')
             content = template.render(error_message = errors)
             self.send_response(200)
-        
         self.send_header("Content-type", "text/html")
         self.end_headers()
         self.wfile.write(content.encode())
 
     async def post_profile_update(self):
+        """Handle profile_update POST queries"""
         session_id = self.get_session_id()
         if session_id is None:
             self.send_response(404)
@@ -169,11 +174,10 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(b"<h1>Where are you going!</h1>")
 
         user_email = sessions[session_id]['email']
-
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)
         data = parse_qs(post_data.decode())
-        
+
         first_name = ""
         last_name = ""
         password = ""
@@ -203,6 +207,7 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
 
     def get_session_id(self):
+        """Gets session from current user"""
         if "Cookie" in self.headers:
             cookies = self.headers["Cookie"]
             for cookie in cookies.split(";"):
@@ -212,9 +217,11 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         return None
     
     def generate_session_id(self, email):
+        """Generate session id"""
         return hashlib.sha256(f"{email}{time.time()}".encode()).hexdigest()
     
 def create_handler_with_db(db : DbServiceI):
+    """Add db to the http server"""
     class Handler(SimpleHTTPRequestHandler):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, db=db, **kwargs)
@@ -222,6 +229,7 @@ def create_handler_with_db(db : DbServiceI):
     return Handler
 
 def main():
+    """Main function to start the server"""
     server_address = ("", 8000)
     db: DbServiceI = DBService("small_db.db")
     asyncio.run(db.create_tables())
