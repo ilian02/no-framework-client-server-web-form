@@ -2,12 +2,12 @@
 Database service that implements DBServiceI interface to work with sqlite3 db
 """
 
-from DBServiceInterface import DbServiceI
+from db_service_interface import DbServiceI
 import sqlite3
 import bcrypt
 
 
-class DBService(DbServiceI):
+class DbService(DbServiceI):
     
     def __init__(self, file_name):
         self.file_name = file_name

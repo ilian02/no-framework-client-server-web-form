@@ -1,4 +1,4 @@
-from DBServiceInterface import DbServiceI
+from db_service_interface import DbServiceI
 
 
 class Controller:
@@ -9,48 +9,55 @@ class Controller:
 
         errors = []
         if "@" not in email:
-            errors.insert(0, "Email must contain @")
+            errors.append("Email must contain @")
 
         if password.strip() == "":
-            errors.insert(0, "Password cannot be empty")
+            errors.append("Password cannot be empty")
 
         (login_result, output) = await self.dbService.login_user(email, password)
         match login_result:
             case True:
                 self.id = output[0]
             case False:
-                errors.insert(0, "Incorrect password")
+                errors.append("Incorrect password")
         
         if len(errors) != 0:
             return (False, errors)
         else:
             return (True, [])
     
-    async def register_user(self, first_name: str, last_name: str, email: str
-                            , password: str, confirm_password: str):
-
+    def is_valid_register_info(self, first_name: str, last_name: str, email: str, 
+                               password: str, confirm_password: str):
         errors = []
         if "@" not in email:
-            errors.insert(0, "Email must contain @")
+            errors.append("Email must contain @")
 
         if first_name.strip() == "":
-            errors.insert(0, "First name cannot be empty")
+            errors.append("First name cannot be empty")
 
         if last_name.strip() == "":
-            errors.insert(0, "Last name cannot be empty")
+            errors.append("Last name cannot be empty")
 
         if email.strip() == "":
-            errors.insert(0, "Email cannot be empty")
+            errors.append("Email cannot be empty")
 
         if password.strip() == "" or len(password) < 5:
-            errors.insert(0, "Password cannot be empty and it must be at least 6 symbols")
+            errors.append("Password cannot be empty and it must be at least 5 symbols")
 
         if confirm_password.strip() == "":
-            errors.insert(0, "Confirm Password cannot be empty")
+            errors.append("Confirm Password cannot be empty")
 
         if confirm_password != password:
-            errors.insert(0, "Password and Confirm Password do not match")
+            errors.append("Password and Confirm Password do not match")
+        
+        return errors
 
+        
+
+    async def register_user(self, first_name: str, last_name: str, email: str,
+                             password: str, confirm_password: str):
+
+        errors = self.is_valid_register_info(first_name, last_name, email, password, confirm_password)
 
         if len(errors) != 0:
             return (False, errors)
@@ -81,7 +88,7 @@ class Controller:
 
         errors = []
         if len(password) < 5 and password != "":
-            errors.insert(0, "Password cannot be less than 6 symbols")
+            errors.append("Password cannot be less than 6 symbols")
             return (False, errors)
 
         if first_name != "":

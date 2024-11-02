@@ -7,10 +7,10 @@ import http.server
 import asyncio
 import time
 from urllib.parse import parse_qs
-from DBServiceInterface import DbServiceI
+from db_service_interface import DbServiceI
 from controller import Controller
 from envs import env, static_dir
-from DBService import DBService
+from db_service import DbService
 
 
 sessions = {}
@@ -231,7 +231,7 @@ def create_handler_with_db(db : DbServiceI):
 def main():
     """Main function to start the server"""
     server_address = ("", 8000)
-    db: DbServiceI = DBService("small_db.db")
+    db: DbServiceI = DbService("small_db.db")
     asyncio.run(db.create_tables())
     handler_with_db = create_handler_with_db(db)
     httpd = http.server.HTTPServer(server_address, handler_with_db)
