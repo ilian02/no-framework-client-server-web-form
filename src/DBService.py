@@ -4,6 +4,7 @@ Database service that implements DBServiceI interface to work with sqlite3 db
 
 from DBServiceInterface import DbServiceI
 import sqlite3
+import bcrypt
 
 
 class DBService(DbServiceI):
@@ -37,13 +38,21 @@ class DBService(DbServiceI):
         try:
             with sqlite3.connect(self.file_name) as conn: 
                 cursor = conn.cursor()
+                cursor.execute("""SELECT id FROM USERS WHERE EMAIL = ?""", (email, ))
+                result = cursor.fetchone()
+                if result is not None:
+                    return (False, "Email already exists")
+
+                salt = bcrypt.gensalt()
+                hashed_password = bcrypt.hashpw(password.encode(), salt)
+
                 cursor.execute("""INSERT INTO users(first_name, last_name, email, password)
-                               VALUES(?, ?, ?, ?)""", (first_name, last_name, email, password))
+                               VALUES(?, ?, ?, ?)""", (first_name, last_name, email, hashed_password))
                 conn.commit()
                 return (True, cursor.lastrowid)
         except sqlite3.OperationalError as e:
             print(e)
-            return (False, ["Email already exists"])
+            return (False, "An error has been found")
 
 
     async def login_user(self, email, password):
@@ -60,7 +69,7 @@ class DBService(DbServiceI):
                 if ret_id is None:
                     return (False, ["Email not found"])
 
-                if password == ret_password:
+                if bcrypt.checkpw(password.encode(), ret_password):
                     return (True, [ret_id])
                 else:
                     return (False, ["Wrong password"])

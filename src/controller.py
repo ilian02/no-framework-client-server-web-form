@@ -55,9 +55,9 @@ class Controller:
         if len(errors) != 0:
             return (False, errors)
         else:
-            (register_result, errors) = await self.dbService.register_user(first_name, last_name, email, password)
-            if register_result == False:
-                errors.insert(0, "Email already exists")
+            (register_result, reg_errors) = await self.dbService.register_user(first_name, last_name, email, password)
+            if register_result is False:
+                errors.insert(0, reg_errors)
                 return (False, errors)
             else:
                 print(f"Registered in as {errors}")
