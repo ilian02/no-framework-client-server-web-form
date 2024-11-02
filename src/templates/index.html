@@ -8,17 +8,29 @@
 </head>
 <body>
     <div class="container">
-        <h1>Welcome! {{ name }}</h1>
-        <p>Select an option to continue:</p>
+        {% if email is defined %}
+            <h1>Welcome! {{ email }}</h1>
+            <div class="btn-group">
+                <a href="/profile">
+                    <button class="btn btn-login">Change profile settings</button>
+                    </a>
+                <a href="/logout">
+                <button class="btn btn-login">Logout</button>
+                </a>
+            </div>
+        {% else %}
+            <h1>Welcome!</h1>
+            <p>Select an option to continue:</p>
 
-        <div class="btn-group">
-            <a href="/login">
-            <button class="btn btn-login">Login</button>
-            </a>
-            <a href="/register">
-                <button class="btn btn-register">Register</button>
-            </a>
-        </div>
+            <div class="btn-group">
+                <a href="/login">
+                <button class="btn btn-login">Login</button>
+                </a>
+                <a href="/register">
+                    <button class="btn btn-register">Register</button>
+                </a>
+            </div>
+        {% endif %}
     </div>
 </body>
 </html>

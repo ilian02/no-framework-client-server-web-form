@@ -1,13 +1,13 @@
-from pathlib import Path
+import hashlib
 import random
 import string
+import time
 from urllib.parse import parse_qs, unquote
 from DBServiceInterface import DbServiceI
 from controller import Controller
-from envs import env, static_dir, sessions
+from envs import env, static_dir
 from DBService import DBService
 import http.server
-from http.cookies import SimpleCookie
 import asyncio
 
 
@@ -19,33 +19,46 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
     def __init__(self, *args, db=None, **kwargs):
         self.controller = Controller(db)
+        self.sessions = {}
         super().__init__(*args, **kwargs)
 
-    def do_GET(self):
-        # session_id = self.get_session_id_from_cookies()
-        # username = sessions.get(session_id)
 
+    def do_GET(self):
+        session_id = self.get_session_id()
+        print(session_id)
         if self.path == "/":
+            print(session_id in self.sessions)
             template = env.get_template('index.html')
-            content = template.render()
+            if session_id and session_id in self.sessions:
+                print("Found")
+                user_email = self.sessions[session_id]['email']
+                content = template.render(user_email)
+            else:
+                content = template.render()
+
             self.send_response(200)
             self.send_header("Content-type", "text/html")
             self.end_headers()
             self.wfile.write(content.encode())
 
         elif self.path == "/register":
-            template = env.get_template('register.html')
-            content = template.render()
-            self.send_response(200)
-            self.send_header("Content-type", "text/html")
-            self.end_headers()
-            self.wfile.write(content.encode())
+            self.get_register_page()
 
         elif self.path == "/login":
             self.get_login_page()
         
         elif self.path == "/all":
             asyncio.run(self.get_all_page())
+
+        elif self.path == "/logout":
+            session_id = self.get_session_id()
+            if session_id in self.sessions:
+                del self.sessions[session_id]
+
+            self.send_response(302)
+            self.send_header("Location", "/")
+            self.send_header("Set-Cookie", "session_id=; Max-Age=0; Path=/")
+            self.end_headers()
         
         elif self.path.startswith("/static/"):
             file_path = static_dir / self.path[len("/static/"):]
@@ -59,6 +72,14 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                         self.wfile.write(f.read())
                 else:
                     return http.server.SimpleHTTPRequestHandler.do_GET(self)
+
+    def get_register_page(self, error_message=""):
+        template = env.get_template('register.html')
+        content = template.render()
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        self.wfile.write(content.encode())
 
     def get_login_page(self, error_message=""):
         template = env.get_template('login.html')
@@ -88,7 +109,6 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Content-type", "text/html")
             self.end_headers()
             self.wfile.write(b"<h1>Where are you going!</h1>")
-            self.wfile.write(b'<a href="/">Page not found</a>')
 
     async def post_login(self):
         content_length = int(self.headers['Content-Length'])
@@ -99,10 +119,12 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         template = None
         content = None
         if status == True:
-            template = env.get_template('index.html')
-            content = template.render()
+            session_id = self.generate_session_id(data.get("email")[0])
+            self.sessions[session_id] = {"email": data.get("email")[0], "created_at": time.time()}
             self.send_response(302)
-
+            self.send_header("Set-Cookie", f"session_id={session_id}; HttpOnly; Path=/")
+            template = env.get_template('index.html')
+            content = template.render(email = self.sessions[session_id]['email'])
         else:
             template = env.get_template('login.html')
             content = template.render(error_message = errors)
@@ -123,21 +145,32 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         template = None
         content = None
         if status:
-            template = env.get_template('index.html')
+            template = env.get_template('login.html')
             content = template.render()
             self.send_response(302)
         else:
             template = env.get_template('register.html')
-            content = None
             content = template.render(error_message = errors)
             self.send_response(200)
         
         self.send_header("Content-type", "text/html")
         self.end_headers()
         self.wfile.write(content.encode())
+
+
+    def get_session_id(self):
+        if "Cookie" in self.headers:
+            cookies = self.headers["Cookie"]
+            for cookie in cookies.split(";"):
+                key, value = cookie.strip().split("=")
+                if key == "session_id":
+                    return value
+        return None
+    
+    def generate_session_id(self, email):
+        return hashlib.sha256(f"{email}{time.time()}".encode()).hexdigest()
     
 def create_handler_with_db(db : DbServiceI):
-    # A wrapper function to return a handler that includes the db
     class Handler(SimpleHTTPRequestHandler):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, db=db, **kwargs)
