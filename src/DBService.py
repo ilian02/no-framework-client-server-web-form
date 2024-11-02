@@ -65,7 +65,15 @@ class DBService(DbServiceI):
             return False
 
     async def get_users(self):
-        pass
+        try:
+            with sqlite3.connect(self.file_name) as conn: 
+                cursor = conn.cursor()
+                cursor.execute("""SELECT * FROM users""")
+                users = cursor.fetchall()
+                return (True, users)
+        except sqlite3.OperationalError as e:
+            print(e)
+            return (False, ["Error getting users from database"])
 
     async def get_user_by_id(self, id):
         pass   

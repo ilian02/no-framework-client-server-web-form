@@ -44,6 +44,9 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         elif self.path == "/login":
             self.get_login_page()
         
+        elif self.path == "/all":
+            asyncio.run(self.get_all_page())
+        
         elif self.path.startswith("/static/"):
             file_path = static_dir / self.path[len("/static/"):]
             print(file_path)
@@ -65,6 +68,15 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(content.encode())
 
+    async def get_all_page(self):
+        template = env.get_template('all.html')
+        users = await self.controller.get_all_users()
+        content = template.render(users = users)
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        self.wfile.write(content.encode())
+        
 
     def do_POST(self):
         if self.path == "/login":

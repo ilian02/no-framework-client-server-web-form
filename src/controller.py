@@ -68,3 +68,9 @@ class Controller:
                 print(f"Registered in as {errors}")
                 return (True, [])
     
+    async def get_all_users(self):
+        (status, result) = await self.dbService.get_users()
+        if status:
+            return result
+        else:
+            return "Error getting users from DB"
