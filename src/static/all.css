@@ -67,3 +67,28 @@ th, td {
     color: white;
 }
 
+.btn-group {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.btn {
+    padding: 15px 30px;
+    font-size: 1em;
+    font-weight: bold;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.btn-home {
+    background-color: #1e90ff;
+    color: white;
+}
+
+.btn-home:hover {
+    background-color: #28a745;
+    transform: translateY(-2px);
+}

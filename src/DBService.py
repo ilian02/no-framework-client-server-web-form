@@ -33,7 +33,6 @@ class DBService(DbServiceI):
                 cursor.execute("""INSERT INTO users(first_name, last_name, email, password)
                                VALUES(?, ?, ?, ?)""", (first_name, last_name, email, password))
                 conn.commit()
-                print("Registered")
                 return (True, cursor.lastrowid)
         except sqlite3.OperationalError as e:
             print(e)
@@ -42,7 +41,6 @@ class DBService(DbServiceI):
 
     async def login_user(self, email, password):
         try:
-            print(email)
             with sqlite3.connect(self.file_name) as conn: 
                 cursor = conn.cursor()
                 cursor.execute("""SELECT * FROM users
@@ -54,9 +52,7 @@ class DBService(DbServiceI):
                 if ret_id is None:
                     return (False, ["Email not found"])
 
-                print(password + " " + ret_password)
                 if password == ret_password:
-                    print("In here somehow")
                     return (True, [ret_id])
                 else:
                     return (False, ["Wrong password"])
@@ -106,7 +102,7 @@ class DBService(DbServiceI):
             with sqlite3.connect(self.file_name) as conn: 
                 cursor = conn.cursor()
                 cursor.execute("""UPDATE users
-                               set first_name = ?, last_name = ?, password = ?
+                                SET first_name = ?, last_name = ?, password = ?
                                 WHERE email = ?""", (first_name, last_name, password, email))
                 return (True, [])
         except sqlite3.OperationalError as e:

@@ -1,5 +1,3 @@
-
-
 from DBServiceInterface import DbServiceI
 
 
@@ -26,7 +24,6 @@ class Controller:
         if len(errors) != 0:
             return (False, errors)
         else:
-            print("hereee")
             return (True, [])
     
     async def register_user(self, first_name: str, last_name: str, email: str
@@ -74,14 +71,12 @@ class Controller:
             return (False, ["Error getting users from DB"])
 
     async def update_user(self, first_name, last_name, password, email):
-        print("Changing user info")
         (result, user) = await self.dbService.get_user_by_email(email)
         if result == False:
             return (False, ["Error finding user with this email"])
         
-        print(user)
-        new_fn = user[0]
-        new_ln = user[1]
+        new_fn = user[1]
+        new_ln = user[2]
         new_pass = user[3]
 
         errors = []
@@ -95,6 +90,7 @@ class Controller:
             new_ln = last_name
         if password != "":
             new_pass = password
+
 
         (result, output) = await self.dbService.update_user(new_fn, new_ln, email, new_pass)
 

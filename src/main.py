@@ -2,7 +2,7 @@ import hashlib
 import random
 import string
 import time
-from urllib.parse import parse_qs, unquote
+from urllib.parse import parse_qs
 from DBServiceInterface import DbServiceI
 from controller import Controller
 from envs import env, static_dir
@@ -26,12 +26,10 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/":
             session_id = self.get_session_id()
-            print(session_id in sessions)
             template = env.get_template('index.html')
             if session_id and session_id in sessions:
-                print("Found")
                 user_email = sessions[session_id]['email']
-                content = template.render(user_email)
+                content = template.render(email = user_email)
             else:
                 content = template.render()
 
@@ -64,7 +62,6 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         
         elif self.path.startswith("/static/"):
             file_path = static_dir / self.path[len("/static/"):]
-            print(file_path)
             if file_path.exists() and file_path.is_file():
                 if self.path.endswith(".css"):
                     self.send_response(200)
@@ -148,7 +145,6 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         (status, errors) = await self.controller.register_user(data.get("first_name")[0], data.get("last_name")[0],
                                                     data.get("email")[0], data.get("password")[0],
                                                     data.get("confirm_password")[0])
-        print(errors)
         template = None
         content = None
         if status:
@@ -185,10 +181,9 @@ class SimpleHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         if data.get("first_name"):
             first_name = data.get("first_name")[0]
         if data.get("last_name"):
-            first_name = data.get("last_name")[0]
+            last_name = data.get("last_name")[0]
         if data.get("password"):
-            first_name = data.get("password_name")[0]
-
+            password = data.get("password")[0]
         (status, errors) = await self.controller.update_user(first_name, last_name,
                                                    password, user_email)
         template = None
