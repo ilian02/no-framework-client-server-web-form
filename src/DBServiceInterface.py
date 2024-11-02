@@ -22,13 +22,13 @@ class DbServiceI(ABC):
         pass
 
     @abstractmethod
+    async def update_user(self, first_name, last_name, email, password):
+        pass
+
+    @abstractmethod
     async def get_user_by_id(self, id):
         pass    
 
     @abstractmethod
-    async def create_token(self, user_id):
-        pass
-
-    @abstractmethod
-    async def check_token(self, token):
+    async def get_user_by_email(self, email):
         pass

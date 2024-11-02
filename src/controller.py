@@ -8,27 +8,25 @@ class Controller:
         self.dbService = db
 
     async def login_user(self, email: str, password: str):
-        print("Logging in")
-        
+
         errors = []
         if "@" not in email:
-            errors += "Email must contain @"
+            errors.insert(0, "Email must contain @")
 
         if password.strip() == "":
-            errors += "Password cannot be empty"
+            errors.insert(0, "Password cannot be empty")
 
         (login_result, output) = await self.dbService.login_user(email, password)
         match login_result:
             case True:
                 self.id = output[0]
-            case "Email not found":
-                errors += "An account with this password does not exist"
-            case "Wrong password":
-                errors += "Password does not match"
-
+            case False:
+                errors.insert(0, "Incorrect password")
+        
         if len(errors) != 0:
             return (False, errors)
         else:
+            print("hereee")
             return (True, [])
     
     async def register_user(self, first_name: str, last_name: str, email: str
@@ -36,25 +34,25 @@ class Controller:
 
         errors = []
         if "@" not in email:
-            errors += "Email must contain @"
+            errors.insert(0, "Email must contain @")
 
         if first_name.strip() == "":
-            errors += "First name cannot be empty"
+            errors.insert(0, "First name cannot be empty")
 
         if last_name.strip() == "":
-            errors += "Last name cannot be empty"
+            errors.insert(0, "Last name cannot be empty")
 
         if email.strip() == "":
-            errors += "Email cannot be empty"
+            errors.insert(0, "Email cannot be empty")
 
-        if password.strip() == "":
-            errors += "Password cannot be empty"
+        if password.strip() == "" or len(password) < 5:
+            errors.insert(0, "Password cannot be empty and it must be at least 6 symbols")
 
         if confirm_password.strip() == "":
-            errors += "Confirm Password cannot be empty"
+            errors.insert(0, "Confirm Password cannot be empty")
 
         if confirm_password != password:
-            errors += "Password and Confirm Password do not match"
+            errors.insert(0, "Password and Confirm Password do not match")
 
 
         if len(errors) != 0:
@@ -62,7 +60,7 @@ class Controller:
         else:
             (register_result, errors) = await self.dbService.register_user(first_name, last_name, email, password)
             if register_result == False:
-                errors += "Email already exists"
+                errors.insert(0, "Email already exists")
                 return (False, errors)
             else:
                 print(f"Registered in as {errors}")
@@ -73,4 +71,34 @@ class Controller:
         if status:
             return result
         else:
-            return "Error getting users from DB"
+            return (False, ["Error getting users from DB"])
+
+    async def update_user(self, first_name, last_name, password, email):
+        print("Changing user info")
+        (result, user) = await self.dbService.get_user_by_email(email)
+        if result == False:
+            return (False, ["Error finding user with this email"])
+        
+        print(user)
+        new_fn = user[0]
+        new_ln = user[1]
+        new_pass = user[3]
+
+        errors = []
+        if len(password) < 5 and password != "":
+            errors.insert(0, "Password cannot be less than 6 symbols")
+            return (False, errors)
+
+        if first_name != "":
+            new_fn = first_name
+        if last_name != "":
+            new_ln = last_name
+        if password != "":
+            new_pass = password
+
+        (result, output) = await self.dbService.update_user(new_fn, new_ln, email, new_pass)
+
+        if result:
+            return (True, [])
+        else:
+            return (False, output)

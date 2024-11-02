@@ -10,8 +10,13 @@
     <div class="container">
         <div class="form-container">
             <h2>Register</h2>
+
             {% if error_message %}
-            <p style="color: red;">{{ error_message }}</p>
+                <ul>
+                    {% for error in  error_message%}
+                        <li> {{error}} </li>
+                    {% endfor %}
+                <ul>
             {% endif %}
             <form action="/register" method="post">
                 <div class="form-group">

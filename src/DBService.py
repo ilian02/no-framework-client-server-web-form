@@ -54,7 +54,9 @@ class DBService(DbServiceI):
                 if ret_id is None:
                     return (False, ["Email not found"])
 
+                print(password + " " + ret_password)
                 if password == ret_password:
+                    print("In here somehow")
                     return (True, [ret_id])
                 else:
                     return (False, ["Wrong password"])
@@ -76,10 +78,37 @@ class DBService(DbServiceI):
             return (False, ["Error getting users from database"])
 
     async def get_user_by_id(self, id):
-        pass   
+        try:
+            with sqlite3.connect(self.file_name) as conn: 
+                cursor = conn.cursor()
+                cursor.execute("""SELECT * FROM users
+                                WHERE id = ?""", (id, ))
+                user = cursor.fetchone()
+                return (True, user)
+        except sqlite3.OperationalError as e:
+            print(e)
+            return (False, ["Error getting users from database"])
+        
+    async def get_user_by_email(self, email):
+        try:
+            with sqlite3.connect(self.file_name) as conn: 
+                cursor = conn.cursor()
+                cursor.execute("""SELECT * FROM users
+                                WHERE email = ?""", (email, ))
+                user = cursor.fetchone()
+                return (True, user)
+        except sqlite3.OperationalError as e:
+            print(e)
+            return (False, ["Error getting user from database"])
 
-    async def create_token(self, user_id):
-        pass
-
-    async def check_token(self, token):
-        pass
+    async def update_user(self, first_name, last_name, email, password):
+        try:
+            with sqlite3.connect(self.file_name) as conn: 
+                cursor = conn.cursor()
+                cursor.execute("""UPDATE users
+                               set first_name = ?, last_name = ?, password = ?
+                                WHERE email = ?""", (first_name, last_name, password, email))
+                return (True, [])
+        except sqlite3.OperationalError as e:
+            print(e)
+            return (False, ["Something is wrong"])

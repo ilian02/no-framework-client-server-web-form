@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/static/index.css">
+    <link rel="stylesheet" href="/static/register.css">
     <title>Profile page</title>
 </head>
 <body>
@@ -13,7 +14,7 @@
             {% if error_message %}
             <p style="color: red;">{{ error_message }}</p>
             {% endif %}
-            <form action="/register" method="post">
+            <form action="/profile" method="post">
                 <div class="form-group">
                     <label for="first_name">First name</label>
                     <input type="text" id="first_name" placeholder="First name" name="first_name">
