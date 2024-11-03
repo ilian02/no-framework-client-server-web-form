@@ -64,11 +64,13 @@ class DbService(DbServiceI):
                                WHERE email = ?
                                 """, (email, ))
                 
-                (ret_id, ret_first_name, ret_last_name, ret_password, ret_email) = cursor.fetchone()
-                
-                if ret_id is None:
+                result = cursor.fetchone()
+                if result is None:
                     return (False, ["Email not found"])
-
+                
+                print(result)
+                (ret_id, ret_first_name, ret_last_name, ret_password, ret_email) = result
+                
                 if bcrypt.checkpw(password.encode(), ret_password):
                     return (True, [ret_id])
                 else:
