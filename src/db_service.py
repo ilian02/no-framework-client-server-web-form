@@ -68,7 +68,6 @@ class DbService(DbServiceI):
                 if result is None:
                     return (False, ["Email not found"])
                 
-                print(result)
                 (ret_id, ret_first_name, ret_last_name, ret_password, ret_email) = result
                 
                 if bcrypt.checkpw(password.encode(), ret_password):

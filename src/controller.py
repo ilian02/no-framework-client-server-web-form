@@ -67,7 +67,6 @@ class Controller:
                 errors.insert(0, reg_errors)
                 return (False, errors)
             else:
-                print(f"Registered in as {errors}")
                 return (True, [])
     
     async def get_all_users(self):
