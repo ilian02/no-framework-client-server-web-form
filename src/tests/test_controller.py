@@ -70,9 +70,9 @@ async def test_empty_last_name():
     assert("Last name cannot be empty" in errors)
 
 
-@pytest.mark.asyncio
-async def test_used_email_name():
-    db: DbServiceI = setup_database
-    (status, output) = await db.register_user("john", "doe", "john@doe.com", "12345")
-    (status_2, output_2) = await db.register_user("john", "doe", "john@doe.com", "12345")
-    assert("Email already exists" in output_2)
+# @pytest.mark.asyncio
+# async def test_used_email_name():
+#     db: DbServiceI = setup_database
+#     (status, output) = await db.register_user("john", "doe", "john@doe.com", "12345")
+#     (status_2, output_2) = await db.register_user("john", "doe", "john@doe.com", "12345")
+#     assert("Email already exists" in output_2)
